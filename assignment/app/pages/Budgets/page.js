@@ -1,6 +1,16 @@
 "use client";
 import React, { useEffect, useState, useCallback } from "react";
-import { Target, TrendingUp, TrendingDown, AlertTriangle, CheckCircle2, DollarSign, Wallet, PieChart, Settings } from "lucide-react";
+import {
+  Target,
+  TrendingUp,
+  TrendingDown,
+  AlertTriangle,
+  CheckCircle2,
+  DollarSign,
+  Wallet,
+  PieChart,
+  Settings,
+} from "lucide-react";
 
 const Budgets = ({
   transactions,
@@ -32,7 +42,7 @@ const Budgets = ({
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [setBudgets]); // Added setBudgets to dependency array
 
   useEffect(() => {
     fetchBudgets();
@@ -127,9 +137,16 @@ const Budgets = ({
   };
 
   const budgetComparison = getBudgetComparison();
-  const totalBudget = Object.values(budgets).reduce((sum, amount) => sum + amount, 0);
-  const totalSpent = budgetComparison.reduce((sum, item) => sum + item.actual, 0);
-  const totalPercentage = totalBudget > 0 ? (totalSpent / totalBudget) * 100 : 0;
+  const totalBudget = Object.values(budgets).reduce(
+    (sum, amount) => sum + amount,
+    0
+  );
+  const totalSpent = budgetComparison.reduce(
+    (sum, item) => sum + item.actual,
+    0
+  );
+  const totalPercentage =
+    totalBudget > 0 ? (totalSpent / totalBudget) * 100 : 0;
 
   const getStatusColor = (percentage) => {
     if (percentage <= 50) return "text-emerald-600";
@@ -138,8 +155,10 @@ const Budgets = ({
   };
 
   const getStatusIcon = (percentage) => {
-    if (percentage <= 50) return <CheckCircle2 className="w-5 h-5 text-emerald-600" />;
-    if (percentage <= 80) return <AlertTriangle className="w-5 h-5 text-yellow-600" />;
+    if (percentage <= 50)
+      return <CheckCircle2 className="w-5 h-5 text-emerald-600" />;
+    if (percentage <= 80)
+      return <AlertTriangle className="w-5 h-5 text-yellow-600" />;
     return <TrendingUp className="w-5 h-5 text-red-600" />;
   };
 
@@ -162,10 +181,12 @@ const Budgets = ({
               <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
                 Budget Management
               </h1>
-              <p className="text-gray-600 mt-1">Track and manage your spending goals</p>
+              <p className="text-gray-600 mt-1">
+                Track and manage your spending goals
+              </p>
             </div>
           </div>
-          
+
           <div className="flex items-center gap-3">
             {loading && (
               <div className="flex items-center gap-2 text-blue-600">
@@ -173,7 +194,6 @@ const Budgets = ({
                 <span className="text-sm font-medium">Syncing...</span>
               </div>
             )}
-            
           </div>
         </div>
 
@@ -185,7 +205,9 @@ const Budgets = ({
                 <AlertTriangle className="w-5 h-5 text-red-600" />
               </div>
               <div className="flex-1">
-                <h3 className="font-semibold text-red-800 mb-1">Something went wrong</h3>
+                <h3 className="font-semibold text-red-800 mb-1">
+                  Something went wrong
+                </h3>
                 <p className="text-red-700 mb-3">{error}</p>
                 <button
                   onClick={() => {
@@ -209,12 +231,16 @@ const Budgets = ({
                 <Wallet className="w-6 h-6 text-blue-600" />
               </div>
               <div>
-                <p className="text-sm text-gray-600 font-medium">Total Budget</p>
-                <p className="text-2xl font-bold text-gray-900">${totalBudget.toLocaleString()}</p>
+                <p className="text-sm text-gray-600 font-medium">
+                  Total Budget
+                </p>
+                <p className="text-2xl font-bold text-gray-900">
+                  ${totalBudget.toLocaleString()}
+                </p>
               </div>
             </div>
           </div>
-          
+
           <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-200 hover:shadow-xl transition-shadow duration-200">
             <div className="flex items-center gap-4">
               <div className="p-3 bg-purple-100 rounded-xl">
@@ -222,11 +248,13 @@ const Budgets = ({
               </div>
               <div>
                 <p className="text-sm text-gray-600 font-medium">Total Spent</p>
-                <p className="text-2xl font-bold text-gray-900">${totalSpent.toLocaleString()}</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  ${totalSpent.toLocaleString()}
+                </p>
               </div>
             </div>
           </div>
-          
+
           <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-200 hover:shadow-xl transition-shadow duration-200">
             <div className="flex items-center gap-4">
               <div className="p-3 bg-emerald-100 rounded-xl">
@@ -234,7 +262,11 @@ const Budgets = ({
               </div>
               <div>
                 <p className="text-sm text-gray-600 font-medium">Budget Used</p>
-                <p className={`text-2xl font-bold ${getStatusColor(totalPercentage)}`}>
+                <p
+                  className={`text-2xl font-bold ${getStatusColor(
+                    totalPercentage
+                  )}`}
+                >
                   {totalPercentage.toFixed(1)}%
                 </p>
               </div>
@@ -242,16 +274,16 @@ const Budgets = ({
           </div>
         </div>
 
-        
-
         {/* Budget Settings */}
         {showSettings && (
           <div className="bg-white rounded-2xl shadow-lg p-8 border border-gray-200">
             <div className="flex items-center gap-2 mb-6">
               <Settings className="w-5 h-5 text-blue-600" />
-              <h2 className="text-xl font-bold text-gray-900">Budget Settings</h2>
+              <h2 className="text-xl font-bold text-gray-900">
+                Budget Settings
+              </h2>
             </div>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
               {categories.map((category) => (
                 <div
@@ -264,10 +296,12 @@ const Budgets = ({
                         className="w-4 h-4 rounded-full shadow-sm"
                         style={{ backgroundColor: categoryColors[category] }}
                       />
-                      <span className="font-semibold text-gray-900">{category}</span>
+                      <span className="font-semibold text-gray-900">
+                        {category}
+                      </span>
                     </div>
                   </div>
-                  
+
                   <div className="relative">
                     <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 font-medium">
                       $
@@ -275,15 +309,19 @@ const Budgets = ({
                     <input
                       type="number"
                       value={budgets[category] || ""}
-                      onChange={(e) => handleBudgetChange(category, e.target.value)}
+                      onChange={(e) =>
+                        handleBudgetChange(category, e.target.value)
+                      }
                       className="w-full pl-8 pr-4 py-3 border border-gray-300 rounded-lg text-center font-semibold text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-white shadow-sm"
                       placeholder="1000"
                       disabled={loading}
                     />
                   </div>
-                  
+
                   <div className="mt-3 text-center">
-                    <p className="text-xs text-gray-500 font-medium">Monthly Budget</p>
+                    <p className="text-xs text-gray-500 font-medium">
+                      Monthly Budget
+                    </p>
                   </div>
                 </div>
               ))}

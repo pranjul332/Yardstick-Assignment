@@ -1,8 +1,24 @@
 import { NextResponse } from "next/server";
-import clientPromise from "@/lib/mongodb";
+
+// Import MongoDB client
+let clientPromise;
+try {
+  // Use dynamic import to prevent build-time issues
+  if (typeof window === "undefined") {
+    // Only import on server-side
+    clientPromise = import("@/lib/mongodb").then((module) => module.default);
+  }
+} catch (error) {
+  console.error("MongoDB import error:", error);
+  clientPromise = null;
+}
 
 export async function GET(request) {
   try {
+    if (!clientPromise) {
+      throw new Error("MongoDB connection not available");
+    }
+
     const client = await clientPromise;
     const db = client.db("finance-app");
 
@@ -26,6 +42,10 @@ export async function GET(request) {
 
 export async function POST(request) {
   try {
+    if (!clientPromise) {
+      throw new Error("MongoDB connection not available");
+    }
+
     const client = await clientPromise;
     const db = client.db("finance-app");
 
