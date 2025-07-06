@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { Target, TrendingUp, TrendingDown, AlertTriangle, CheckCircle2, DollarSign, Wallet, PieChart, Settings } from "lucide-react";
 
 const Budgets = ({
@@ -14,11 +14,7 @@ const Budgets = ({
   const [showSettings, setShowSettings] = useState(true);
 
   // Fetch budgets from backend on component mount
-  useEffect(() => {
-    fetchBudgets();
-  }, []);
-
-  const fetchBudgets = async () => {
+  const fetchBudgets = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -36,7 +32,11 @@ const Budgets = ({
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchBudgets();
+  }, [fetchBudgets]);
 
   const saveBudgetToBackend = async (category, amount) => {
     try {

@@ -54,7 +54,7 @@ const Dashboard = ({ categoryColors = {} }) => {
   const [showBudgetModal, setShowBudgetModal] = useState(false);
   const [budgetForm, setBudgetForm] = useState({});
   const [refreshing, setRefreshing] = useState(false);
-
+  const [animationComplete, setAnimationComplete] = useState(false);
   // Enhanced category colors with gradients
   const defaultCategoryColors = {
     Food: "#FF6B6B",
@@ -208,7 +208,32 @@ const Dashboard = ({ categoryColors = {} }) => {
     if (!monthlyIncome) return 0;
     return ((monthlyIncome - totalSpending) / monthlyIncome) * 100;
   };
-
+  const formatCurrency = (amount) => {
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(amount);
+  };
+  const CustomTooltip = ({ active, payload, label }) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-white/95 backdrop-blur-sm rounded-xl border border-white/20 shadow-2xl p-4">
+          <p className="font-semibold text-gray-900">
+            {payload[0].payload.category}
+          </p>
+          <p className="text-sm text-gray-600">
+            Amount:{" "}
+            <span className="font-medium text-gray-900">
+              {formatCurrency(payload[0].value)}
+            </span>
+          </p>
+        </div>
+      );
+    }
+    return null;
+  };
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50">
@@ -283,7 +308,6 @@ const Dashboard = ({ categoryColors = {} }) => {
                 </p>
               </div>
             </div>
-            
           </div>
         </div>
       </div>
@@ -302,7 +326,12 @@ const Dashboard = ({ categoryColors = {} }) => {
                 <div className="flex items-center space-x-1 text-red-500">
                   <ArrowUpRight className="w-4 h-4" />
                   <span className="text-sm font-medium">
-                    {((summary?.totalSpending || 0) / (summary?.totalBudget || 1) * 100).toFixed(1)}%
+                    {(
+                      ((summary?.totalSpending || 0) /
+                        (summary?.totalBudget || 1)) *
+                      100
+                    ).toFixed(1)}
+                    %
                   </span>
                 </div>
               </div>
@@ -359,7 +388,12 @@ const Dashboard = ({ categoryColors = {} }) => {
                   <ArrowUpRight className="w-4 h-4" />
                   <span className="text-sm font-medium">
                     {(summary?.remainingBudget || 0) >= 0 ? "+" : ""}
-                    {(((summary?.remainingBudget || 0) / (summary?.totalBudget || 1)) * 100).toFixed(1)}%
+                    {(
+                      ((summary?.remainingBudget || 0) /
+                        (summary?.totalBudget || 1)) *
+                      100
+                    ).toFixed(1)}
+                    %
                   </span>
                 </div>
               </div>
@@ -367,21 +401,25 @@ const Dashboard = ({ categoryColors = {} }) => {
                 <p className="text-sm font-medium text-gray-600 mb-1">
                   Remaining Budget
                 </p>
-                <p className={`text-3xl font-bold mb-2 ${
-                  (summary?.remainingBudget || 0) >= 0 ? "text-green-600" : "text-red-600"
-                }`}>
+                <p
+                  className={`text-3xl font-bold mb-2 ${
+                    (summary?.remainingBudget || 0) >= 0
+                      ? "text-green-600"
+                      : "text-red-600"
+                  }`}
+                >
                   {balanceVisible
                     ? `$${summary?.remainingBudget?.toFixed(2) || "0.00"}`
                     : "••••••"}
                 </p>
                 <p className="text-xs text-gray-500">
-                  {(summary?.remainingBudget || 0) >= 0 ? "Available to spend" : "Over budget"}
+                  {(summary?.remainingBudget || 0) >= 0
+                    ? "Available to spend"
+                    : "Over budget"}
                 </p>
               </div>
             </div>
           </div>
-
-          
         </div>
 
         {/* Budget vs Actual Comparison Chart */}
@@ -428,7 +466,118 @@ const Dashboard = ({ categoryColors = {} }) => {
             </ComposedChart>
           </ResponsiveContainer>
         </div>
+        {/* Spending Breakdown */}
+        <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl border border-white/20 p-8 hover:shadow-2xl transition-all duration-500">
+          <div className="flex items-center justify-between mb-8">
+            <div>
+              <h3 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
+                <Award className="w-7 h-7 text-amber-500" />
+                Spending Categories
+              </h3>
+              <p className="text-gray-600 mt-1">
+                Monthly breakdown by category
+              </p>
+            </div>
+            <div className="text-right">
+              <p className="text-sm text-gray-500">Total Spent</p>
+              <p className="text-2xl font-bold text-gray-900">
+                {formatCurrency(
+                  getSpendingData().reduce((sum, item) => sum + item.amount, 0)
+                )}
+              </p>
+            </div>
+          </div>
 
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Pie Chart */}
+            <div className="lg:col-span-2 relative">
+              <ResponsiveContainer width="100%" height={320}>
+                <RechartsPieChart>
+                  <defs>
+                    <filter
+                      id="drop-shadow"
+                      x="-50%"
+                      y="-50%"
+                      width="200%"
+                      height="200%"
+                    >
+                      <feDropShadow
+                        dx="0"
+                        dy="4"
+                        stdDeviation="8"
+                        floodColor="rgba(0,0,0,0.1)"
+                      />
+                    </filter>
+                    {getSpendingData().map((entry, index) => (
+                      <linearGradient
+                        key={`gradient-${index}`}
+                        id={`gradient-${index}`}
+                        x1="0%"
+                        y1="0%"
+                        x2="100%"
+                        y2="100%"
+                      >
+                        <stop offset="0%" stopColor={entry.color} />
+                        <stop
+                          offset="100%"
+                          stopColor={entry.color}
+                          stopOpacity="0.8"
+                        />
+                      </linearGradient>
+                    ))}
+                  </defs>
+                  <Pie
+                    data={getSpendingData()}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={80}
+                    outerRadius={135}
+                    paddingAngle={4}
+                    dataKey="amount"
+                    animationBegin={200}
+                    animationDuration={1200}
+                    animationEasing="ease-out"
+                  >
+                    {getSpendingData().map((entry, index) => (
+                      <Cell
+                        key={`cell-${index}`}
+                        fill={`url(#gradient-${index})`}
+                        stroke="white"
+                        strokeWidth={3}
+                        filter="url(#drop-shadow)"
+                        style={{
+                          filter: "drop-shadow(0 4px 8px rgba(0,0,0,0.1))",
+                          cursor: "pointer",
+                        }}
+                      />
+                    ))}
+                  </Pie>
+                  <Tooltip content={<CustomTooltip />} />
+                </RechartsPieChart>
+              </ResponsiveContainer>
+
+              {/* Center Content */}
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <div className="text-center bg-white/90 backdrop-blur-sm rounded-2xl p-4 shadow-lg border border-white/20">
+                  <p className="text-sm text-gray-500 font-medium">
+                    Total Spent
+                  </p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {formatCurrency(
+                      getSpendingData().reduce(
+                        (sum, item) => sum + item.amount,
+                        0
+                      )
+                    )}
+                  </p>
+                  <p className="text-xs text-gray-400 mt-1">This Month</p>
+                </div>
+              </div>
+            </div>
+
+           
+          </div>
+        </div>
         {/* Budget Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {getBudgetProgressData().map((item, index) => (
@@ -602,7 +751,7 @@ const Dashboard = ({ categoryColors = {} }) => {
           </div>
         </div>
       </div>
-      </div>
-  )
+    </div>
+  );
 }
 export default Dashboard;

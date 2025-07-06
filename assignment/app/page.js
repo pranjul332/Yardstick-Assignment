@@ -13,6 +13,7 @@ import {
   Star,
   Check,
 } from "lucide-react";
+import Link from "next/link";
 
 export default function FinanceAppHomePage() {
   const features = [
@@ -72,13 +73,13 @@ export default function FinanceAppHomePage() {
               of tools designed to help you track, plan, and grow your wealth.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <a
+              <Link
                 href="/pages/Overview"
                 className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-8 py-4 rounded-xl font-semibold text-lg hover:from-blue-600 hover:to-purple-600 transform hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl"
               >
                 Get Started Free
                 <ArrowRight className="w-5 h-5 ml-2 inline" />
-              </a>
+              </Link>
             </div>
           </div>
         </div>
@@ -159,12 +160,12 @@ export default function FinanceAppHomePage() {
             finances. Start your journey today.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <a
+            <Link
               href="/pages/Overview"
               className="bg-white text-blue-600 px-8 py-4 rounded-xl font-semibold text-lg hover:bg-gray-100 transform hover:scale-105 transition-all duration-200 shadow-lg"
             >
               Start Free Trial
-            </a>
+            </Link>
           </div>
         </div>
       </section>
@@ -180,24 +181,24 @@ export default function FinanceAppHomePage() {
               <span className="text-xl font-bold text-white">FinanceHub</span>
             </div>
             <div className="flex space-x-6">
-              <a
+              <Link
                 href="#"
                 className="text-gray-400 hover:text-white transition-colors"
               >
                 Privacy
-              </a>
-              <a
+              </Link>
+              <Link
                 href="#"
                 className="text-gray-400 hover:text-white transition-colors"
               >
                 Terms
-              </a>
-              <a
+              </Link>
+              <Link
                 href="#"
                 className="text-gray-400 hover:text-white transition-colors"
               >
                 Support
-              </a>
+              </Link>
             </div>
           </div>
           <div className="mt-8 pt-8 border-t border-slate-800 text-center text-gray-400">

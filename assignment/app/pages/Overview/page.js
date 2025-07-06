@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import Dashboard from "../Dashboard/page";
 import Transactions from "../Transactions/page";
 import Budgets from "../Budgets/page";
+import Link from "next/link";
 
 const FinanceVisualizer = () => {
   const [transactions, setTransactions] = useState([]);
@@ -135,9 +136,9 @@ const FinanceVisualizer = () => {
       <div className="bg-white shadow-sm border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
-            <a href="/" className="text-2xl font-bold text-gray-900">
+            <Link href="/" className="text-2xl font-bold text-gray-900">
               Personal Finance Visualizer
-            </a>
+            </Link>
             <nav className="flex space-x-4">
               <button
                 onClick={() => setCurrentView("dashboard")}
