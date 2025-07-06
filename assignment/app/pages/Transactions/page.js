@@ -1,6 +1,18 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import { PlusCircle, Edit3, Trash2, AlertCircle, Loader2 } from "lucide-react";
+import {
+  PlusCircle,
+  Edit3,
+  Trash2,
+  AlertCircle,
+  Loader2,
+  Calendar,
+  DollarSign,
+  Tag,
+  FileText,
+  X,
+  CheckCircle,
+} from "lucide-react";
 
 const Transactions = ({ categories, categoryColors }) => {
   const [transactions, setTransactions] = useState([]);
@@ -34,7 +46,6 @@ const Transactions = ({ categories, categoryColors }) => {
       setTransactions(data.transactions || []);
     } catch (error) {
       console.error("Error fetching transactions:", error);
-      // You might want to show a toast notification here
     } finally {
       setLoading(false);
     }
@@ -81,7 +92,6 @@ const Transactions = ({ categories, categoryColors }) => {
       };
 
       if (editingTransaction) {
-        // Update existing transaction
         const response = await fetch(
           `/api/transactions/${editingTransaction._id}`,
           {
@@ -97,7 +107,6 @@ const Transactions = ({ categories, categoryColors }) => {
           throw new Error("Failed to update transaction");
         }
 
-        // Update local state
         setTransactions(
           transactions.map((t) =>
             t._id === editingTransaction._id
@@ -106,7 +115,6 @@ const Transactions = ({ categories, categoryColors }) => {
           )
         );
       } else {
-        // Create new transaction
         const response = await fetch("/api/transactions", {
           method: "POST",
           headers: {
@@ -123,14 +131,12 @@ const Transactions = ({ categories, categoryColors }) => {
         setTransactions([data.transaction, ...transactions]);
       }
 
-      // Reset form
       setFormData({ amount: "", date: "", description: "", category: "Food" });
       setEditingTransaction(null);
       setShowForm(false);
       setFormErrors({});
     } catch (error) {
       console.error("Error saving transaction:", error);
-      // You might want to show an error toast here
     } finally {
       setSubmitting(false);
     }
@@ -140,7 +146,7 @@ const Transactions = ({ categories, categoryColors }) => {
     setEditingTransaction(transaction);
     setFormData({
       amount: transaction.amount.toString(),
-      date: transaction.date.split("T")[0], // Format date for input
+      date: transaction.date.split("T")[0],
       description: transaction.description,
       category: transaction.category,
     });
@@ -164,7 +170,6 @@ const Transactions = ({ categories, categoryColors }) => {
       setTransactions(transactions.filter((t) => t._id !== transaction._id));
     } catch (error) {
       console.error("Error deleting transaction:", error);
-      // You might want to show an error toast here
     }
   };
 
@@ -172,205 +177,301 @@ const Transactions = ({ categories, categoryColors }) => {
     return new Date(dateString).toLocaleDateString();
   };
 
+  const closeForm = () => {
+    setShowForm(false);
+    setEditingTransaction(null);
+    setFormData({
+      amount: "",
+      date: "",
+      description: "",
+      category: "Food",
+    });
+    setFormErrors({});
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
-        <span className="ml-2 text-gray-600">Loading transactions...</span>
+        <div className="relative">
+          <div className="w-16 h-16 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
+          <div className="absolute inset-0 flex items-center justify-center">
+            <DollarSign className="h-6 w-6 text-blue-600" />
+          </div>
+        </div>
+        <div className="ml-4">
+          <p className="text-gray-800 font-medium">Loading transactions...</p>
+          <p className="text-gray-500 text-sm">Please wait a moment</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">Transactions</h2>
-        <button
-          onClick={() => setShowForm(true)}
-          className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 flex items-center space-x-2"
-        >
-          <PlusCircle className="h-5 w-5" />
-          <span>Add Transaction</span>
-        </button>
+    <div className="space-y-8 max-w-6xl mx-auto">
+      {/* Header Section */}
+      <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-8 text-white shadow-xl">
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold mb-2">Transactions</h1>
+            <p className="text-blue-100 text-lg">
+              {transactions.length} total transactions
+            </p>
+          </div>
+          <button
+            onClick={() => setShowForm(true)}
+            className="bg-white text-blue-600 px-6 py-3 rounded-xl hover:bg-blue-50 transition-all duration-200 transform hover:scale-105 shadow-lg flex items-center space-x-2 font-medium"
+          >
+            <PlusCircle className="h-5 w-5" />
+            <span>Add Transaction</span>
+          </button>
+        </div>
       </div>
 
+      {/* Form Modal */}
       {showForm && (
-        <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200">
-          <h3 className="text-lg font-semibold mb-4">
-            {editingTransaction ? "Edit Transaction" : "Add New Transaction"}
-          </h3>
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Amount
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto transform transition-all duration-300 animate-in">
+            <div className="sticky top-0 bg-white border-b border-gray-200 p-6 rounded-t-2xl">
+              <div className="flex justify-between items-center">
+                <h3 className="text-2xl font-bold text-gray-800">
+                  {editingTransaction
+                    ? "Edit Transaction"
+                    : "Add New Transaction"}
+                </h3>
+                <button
+                  onClick={closeForm}
+                  className="text-gray-400 hover:text-gray-600 transition-colors p-2 hover:bg-gray-100 rounded-lg"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+            </div>
+
+            <form onSubmit={handleSubmit} className="p-6 space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <label className="flex items-center text-sm font-semibold text-gray-700 mb-3">
+                    <DollarSign className="h-4 w-4 mr-2 text-green-600" />
+                    Amount
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={formData.amount}
+                      onChange={(e) =>
+                        setFormData({ ...formData, amount: e.target.value })
+                      }
+                      className={`w-full p-4 border-2 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all duration-200 ${
+                        formErrors.amount
+                          ? "border-red-500 bg-red-50"
+                          : "border-gray-200 hover:border-gray-300"
+                      }`}
+                      placeholder="0.00"
+                    />
+                    {formErrors.amount && (
+                      <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
+                        <AlertCircle className="h-5 w-5 text-red-500" />
+                      </div>
+                    )}
+                  </div>
+                  {formErrors.amount && (
+                    <p className="text-red-600 text-sm mt-1 flex items-center animate-in slide-in-from-top-2">
+                      <AlertCircle className="h-4 w-4 mr-1" />
+                      {formErrors.amount}
+                    </p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <label className="flex items-center text-sm font-semibold text-gray-700 mb-3">
+                    <Calendar className="h-4 w-4 mr-2 text-blue-600" />
+                    Date
+                  </label>
+                  <input
+                    type="date"
+                    value={formData.date}
+                    onChange={(e) =>
+                      setFormData({ ...formData, date: e.target.value })
+                    }
+                    className={`w-full p-4 border-2 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all duration-200 ${
+                      formErrors.date
+                        ? "border-red-500 bg-red-50"
+                        : "border-gray-200 hover:border-gray-300"
+                    }`}
+                  />
+                  {formErrors.date && (
+                    <p className="text-red-600 text-sm mt-1 flex items-center animate-in slide-in-from-top-2">
+                      <AlertCircle className="h-4 w-4 mr-1" />
+                      {formErrors.date}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="flex items-center text-sm font-semibold text-gray-700 mb-3">
+                  <FileText className="h-4 w-4 mr-2 text-purple-600" />
+                  Description
                 </label>
                 <input
-                  type="number"
-                  step="0.01"
-                  value={formData.amount}
+                  type="text"
+                  value={formData.description}
                   onChange={(e) =>
-                    setFormData({ ...formData, amount: e.target.value })
+                    setFormData({ ...formData, description: e.target.value })
                   }
-                  className={`w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                    formErrors.amount ? "border-red-500" : "border-gray-300"
+                  className={`w-full p-4 border-2 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all duration-200 ${
+                    formErrors.description
+                      ? "border-red-500 bg-red-50"
+                      : "border-gray-200 hover:border-gray-300"
                   }`}
-                  placeholder="0.00"
+                  placeholder="Enter transaction description"
                 />
-                {formErrors.amount && (
-                  <p className="text-red-500 text-sm mt-1 flex items-center">
+                {formErrors.description && (
+                  <p className="text-red-600 text-sm mt-1 flex items-center animate-in slide-in-from-top-2">
                     <AlertCircle className="h-4 w-4 mr-1" />
-                    {formErrors.amount}
+                    {formErrors.description}
                   </p>
                 )}
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Date
+              <div className="space-y-2">
+                <label className="flex items-center text-sm font-semibold text-gray-700 mb-3">
+                  <Tag className="h-4 w-4 mr-2 text-orange-600" />
+                  Category
                 </label>
-                <input
-                  type="date"
-                  value={formData.date}
+                <select
+                  value={formData.category}
                   onChange={(e) =>
-                    setFormData({ ...formData, date: e.target.value })
+                    setFormData({ ...formData, category: e.target.value })
                   }
-                  className={`w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                    formErrors.date ? "border-red-500" : "border-gray-300"
-                  }`}
-                />
-                {formErrors.date && (
-                  <p className="text-red-500 text-sm mt-1 flex items-center">
-                    <AlertCircle className="h-4 w-4 mr-1" />
-                    {formErrors.date}
-                  </p>
-                )}
+                  className="w-full p-4 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all duration-200 hover:border-gray-300 bg-white"
+                >
+                  {categories.map((category) => (
+                    <option key={category} value={category}>
+                      {category}
+                    </option>
+                  ))}
+                </select>
               </div>
-            </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Description
-              </label>
-              <input
-                type="text"
-                value={formData.description}
-                onChange={(e) =>
-                  setFormData({ ...formData, description: e.target.value })
-                }
-                className={`w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                  formErrors.description ? "border-red-500" : "border-gray-300"
-                }`}
-                placeholder="Enter transaction description"
-              />
-              {formErrors.description && (
-                <p className="text-red-500 text-sm mt-1 flex items-center">
-                  <AlertCircle className="h-4 w-4 mr-1" />
-                  {formErrors.description}
-                </p>
-              )}
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Category
-              </label>
-              <select
-                value={formData.category}
-                onChange={(e) =>
-                  setFormData({ ...formData, category: e.target.value })
-                }
-                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                {categories.map((category) => (
-                  <option key={category} value={category}>
-                    {category}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="flex space-x-4">
-              <button
-                type="button"
-                onClick={handleSubmit}
-                disabled={submitting}
-                className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 disabled:opacity-50 flex items-center space-x-2"
-              >
-                {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
-                <span>{editingTransaction ? "Update" : "Add"} Transaction</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setShowForm(false);
-                  setEditingTransaction(null);
-                  setFormData({
-                    amount: "",
-                    date: "",
-                    description: "",
-                    category: "Food",
-                  });
-                  setFormErrors({});
-                }}
-                className="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600"
-              >
-                Cancel
-              </button>
-            </div>
+              <div className="flex space-x-4 pt-4">
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-4 rounded-xl hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 transform hover:scale-105 shadow-lg flex items-center justify-center space-x-2 font-medium"
+                >
+                  {submitting ? (
+                    <>
+                      <Loader2 className="h-5 w-5 animate-spin" />
+                      <span>Processing...</span>
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle className="h-5 w-5" />
+                      <span>
+                        {editingTransaction ? "Update" : "Add"} Transaction
+                      </span>
+                    </>
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={closeForm}
+                  className="px-6 py-4 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 font-medium"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
 
-      <div className="bg-white rounded-lg shadow-md border border-gray-200">
+      {/* Transactions List */}
+      <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
+        <div className="p-6 bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
+          <h3 className="text-xl font-bold text-gray-800">All Transactions</h3>
+          <p className="text-gray-600 mt-1">Manage your financial records</p>
+        </div>
+
         <div className="p-6">
-          <h3 className="text-lg font-semibold mb-4">All Transactions</h3>
-          <div className="space-y-3">
-            {transactions.length === 0 ? (
-              <p className="text-gray-500 text-center py-8">
-                No transactions yet. Add your first transaction above!
+          {transactions.length === 0 ? (
+            <div className="text-center py-16">
+              <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <DollarSign className="h-12 w-12 text-gray-400" />
+              </div>
+              <h3 className="text-lg font-medium text-gray-800 mb-2">
+                No transactions yet
+              </h3>
+              <p className="text-gray-500 mb-6">
+                Add your first transaction to get started tracking your finances
               </p>
-            ) : (
-              transactions.map((transaction) => (
+              <button
+                onClick={() => setShowForm(true)}
+                className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-200 transform hover:scale-105 shadow-lg flex items-center space-x-2 font-medium mx-auto"
+              >
+                <PlusCircle className="h-5 w-5" />
+                <span>Add Your First Transaction</span>
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {transactions.map((transaction, index) => (
                 <div
                   key={transaction._id}
-                  className="flex items-center justify-between p-4 bg-gray-50 rounded-lg"
+                  className="group bg-gradient-to-r from-gray-50 to-gray-100 hover:from-blue-50 hover:to-purple-50 rounded-xl p-6 transition-all duration-300 transform hover:scale-[1.02] hover:shadow-lg border border-gray-200 hover:border-blue-200"
+                  style={{ animationDelay: `${index * 50}ms` }}
                 >
-                  <div className="flex items-center space-x-3">
-                    <div
-                      className="w-3 h-3 rounded-full"
-                      style={{
-                        backgroundColor: categoryColors[transaction.category],
-                      }}
-                    />
-                    <div>
-                      <p className="font-medium">{transaction.description}</p>
-                      <p className="text-sm text-gray-600">
-                        {transaction.category} • {formatDate(transaction.date)}
-                      </p>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-4">
+                      <div
+                        className="w-4 h-4 rounded-full shadow-md"
+                        style={{
+                          backgroundColor: categoryColors[transaction.category],
+                        }}
+                      />
+                      <div>
+                        <h4 className="font-semibold text-gray-800 text-lg">
+                          {transaction.description}
+                        </h4>
+                        <div className="flex items-center space-x-3 text-sm text-gray-600 mt-1">
+                          <span className="bg-white px-3 py-1 rounded-full shadow-sm">
+                            {transaction.category}
+                          </span>
+                          <span className="flex items-center">
+                            <Calendar className="h-3 w-3 mr-1" />
+                            {formatDate(transaction.date)}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-4">
+                      <div className="text-right">
+                        <p className="text-2xl font-bold text-gray-800">
+                          ${transaction.amount.toFixed(2)}
+                        </p>
+                      </div>
+                      <div className="flex items-center space-x-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                        <button
+                          onClick={() => handleEdit(transaction)}
+                          className="p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-100 rounded-lg transition-all duration-200"
+                        >
+                          <Edit3 className="h-5 w-5" />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(transaction)}
+                          className="p-2 text-red-600 hover:text-red-800 hover:bg-red-100 rounded-lg transition-all duration-200"
+                        >
+                          <Trash2 className="h-5 w-5" />
+                        </button>
+                      </div>
                     </div>
                   </div>
-                  <div className="flex items-center space-x-3">
-                    <p className="font-semibold">
-                      ${transaction.amount.toFixed(2)}
-                    </p>
-                    <button
-                      onClick={() => handleEdit(transaction)}
-                      className="text-blue-500 hover:text-blue-700"
-                    >
-                      <Edit3 className="h-4 w-4" />
-                    </button>
-                    <button
-                      onClick={() => handleDelete(transaction)}
-                      className="text-red-500 hover:text-red-700"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  </div>
                 </div>
-              ))
-            )}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>

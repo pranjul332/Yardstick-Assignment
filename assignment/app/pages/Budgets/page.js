@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { Target } from "lucide-react";
+import { Target, TrendingUp, TrendingDown, AlertTriangle, CheckCircle2, DollarSign, Wallet, PieChart, Settings } from "lucide-react";
 
 const Budgets = ({
   transactions,
@@ -11,6 +11,7 @@ const Budgets = ({
 }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [showSettings, setShowSettings] = useState(true);
 
   // Fetch budgets from backend on component mount
   useEffect(() => {
@@ -125,82 +126,170 @@ const Budgets = ({
     }));
   };
 
-  return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">Budget Management</h2>
-        {loading && (
-          <div className="text-sm text-gray-600">Loading budgets...</div>
-        )}
-      </div>
+  const budgetComparison = getBudgetComparison();
+  const totalBudget = Object.values(budgets).reduce((sum, amount) => sum + amount, 0);
+  const totalSpent = budgetComparison.reduce((sum, item) => sum + item.actual, 0);
+  const totalPercentage = totalBudget > 0 ? (totalSpent / totalBudget) * 100 : 0;
 
-      {/* Error Message */}
-      {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-          <div className="flex">
-            <div className="text-red-600">
-              <svg
-                className="h-5 w-5"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.082 16.5c-.77.833.192 2.5 1.732 2.5z"
-                />
-              </svg>
+  const getStatusColor = (percentage) => {
+    if (percentage <= 50) return "text-emerald-600";
+    if (percentage <= 80) return "text-yellow-600";
+    return "text-red-600";
+  };
+
+  const getStatusIcon = (percentage) => {
+    if (percentage <= 50) return <CheckCircle2 className="w-5 h-5 text-emerald-600" />;
+    if (percentage <= 80) return <AlertTriangle className="w-5 h-5 text-yellow-600" />;
+    return <TrendingUp className="w-5 h-5 text-red-600" />;
+  };
+
+  const getProgressBarColor = (percentage) => {
+    if (percentage <= 50) return "bg-emerald-500";
+    if (percentage <= 80) return "bg-yellow-500";
+    return "bg-red-500";
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 p-6">
+      <div className="max-w-7xl mx-auto space-y-8">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div className="flex items-center gap-3">
+            <div className="p-3 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl shadow-lg">
+              <Target className="w-8 h-8 text-white" />
             </div>
-            <div className="ml-3">
-              <p className="text-sm text-red-800">{error}</p>
-              <button
-                onClick={() => {
-                  setError(null);
-                  fetchBudgets();
-                }}
-                className="mt-2 text-sm text-red-600 hover:text-red-800 underline"
-              >
-                Try again
-              </button>
+            <div>
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
+                Budget Management
+              </h1>
+              <p className="text-gray-600 mt-1">Track and manage your spending goals</p>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-3">
+            {loading && (
+              <div className="flex items-center gap-2 text-blue-600">
+                <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                <span className="text-sm font-medium">Syncing...</span>
+              </div>
+            )}
+            
+          </div>
+        </div>
+
+        {/* Error Message */}
+        {error && (
+          <div className="bg-gradient-to-r from-red-50 to-pink-50 border border-red-200 rounded-2xl p-6 shadow-lg">
+            <div className="flex items-start gap-4">
+              <div className="p-2 bg-red-100 rounded-lg">
+                <AlertTriangle className="w-5 h-5 text-red-600" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-semibold text-red-800 mb-1">Something went wrong</h3>
+                <p className="text-red-700 mb-3">{error}</p>
+                <button
+                  onClick={() => {
+                    setError(null);
+                    fetchBudgets();
+                  }}
+                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors duration-200 text-sm font-medium"
+                >
+                  Try Again
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Overview Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-200 hover:shadow-xl transition-shadow duration-200">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-blue-100 rounded-xl">
+                <Wallet className="w-6 h-6 text-blue-600" />
+              </div>
+              <div>
+                <p className="text-sm text-gray-600 font-medium">Total Budget</p>
+                <p className="text-2xl font-bold text-gray-900">${totalBudget.toLocaleString()}</p>
+              </div>
+            </div>
+          </div>
+          
+          <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-200 hover:shadow-xl transition-shadow duration-200">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-purple-100 rounded-xl">
+                <DollarSign className="w-6 h-6 text-purple-600" />
+              </div>
+              <div>
+                <p className="text-sm text-gray-600 font-medium">Total Spent</p>
+                <p className="text-2xl font-bold text-gray-900">${totalSpent.toLocaleString()}</p>
+              </div>
+            </div>
+          </div>
+          
+          <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-200 hover:shadow-xl transition-shadow duration-200">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-emerald-100 rounded-xl">
+                <PieChart className="w-6 h-6 text-emerald-600" />
+              </div>
+              <div>
+                <p className="text-sm text-gray-600 font-medium">Budget Used</p>
+                <p className={`text-2xl font-bold ${getStatusColor(totalPercentage)}`}>
+                  {totalPercentage.toFixed(1)}%
+                </p>
+              </div>
             </div>
           </div>
         </div>
-      )}
 
-      
+        
 
-      {/* Budget Settings */}
-      <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200">
-        <h3 className="text-lg font-semibold mb-4">Set Monthly Budgets</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {categories.map((category) => (
-            <div
-              key={category}
-              className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
-            >
-              <div className="flex items-center space-x-3">
-                <div
-                  className="w-3 h-3 rounded-full"
-                  style={{ backgroundColor: categoryColors[category] }}
-                />
-                <span className="font-medium">{category}</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <span className="text-sm text-gray-600">$</span>
-                <input
-                  type="number"
-                  value={budgets[category] || ""}
-                  onChange={(e) => handleBudgetChange(category, e.target.value)}
-                  className="w-20 p-1 border border-gray-300 rounded text-center focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="0"
-                  disabled={loading}
-                />
-              </div>
+        {/* Budget Settings */}
+        {showSettings && (
+          <div className="bg-white rounded-2xl shadow-lg p-8 border border-gray-200">
+            <div className="flex items-center gap-2 mb-6">
+              <Settings className="w-5 h-5 text-blue-600" />
+              <h2 className="text-xl font-bold text-gray-900">Budget Settings</h2>
             </div>
-          ))}
-        </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+              {categories.map((category) => (
+                <div
+                  key={category}
+                  className="group bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-5 border border-gray-200 hover:shadow-md transition-all duration-200 hover:from-blue-50 hover:to-indigo-50"
+                >
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      <div
+                        className="w-4 h-4 rounded-full shadow-sm"
+                        style={{ backgroundColor: categoryColors[category] }}
+                      />
+                      <span className="font-semibold text-gray-900">{category}</span>
+                    </div>
+                  </div>
+                  
+                  <div className="relative">
+                    <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 font-medium">
+                      $
+                    </div>
+                    <input
+                      type="number"
+                      value={budgets[category] || ""}
+                      onChange={(e) => handleBudgetChange(category, e.target.value)}
+                      className="w-full pl-8 pr-4 py-3 border border-gray-300 rounded-lg text-center font-semibold text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-white shadow-sm"
+                      placeholder="1000"
+                      disabled={loading}
+                    />
+                  </div>
+                  
+                  <div className="mt-3 text-center">
+                    <p className="text-xs text-gray-500 font-medium">Monthly Budget</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
