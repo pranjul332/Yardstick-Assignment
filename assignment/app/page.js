@@ -1,3 +1,4 @@
+"use client";
 import React from "react";
 import {
   CreditCard,
@@ -21,7 +22,7 @@ export default function FinanceAppHomePage() {
       description:
         "Track all your expenses across multiple categories with smart categorization and real-time updates.",
     },
-    
+
     {
       icon: <PieChart className="w-8 h-8 text-purple-500" />,
       title: "Budget Planning",
@@ -40,7 +41,6 @@ export default function FinanceAppHomePage() {
       description:
         "Calculate loans, mortgages, and investment returns with our comprehensive financial tools.",
     },
-    
   ];
 
   const benefits = [
@@ -79,7 +79,6 @@ export default function FinanceAppHomePage() {
                 Get Started Free
                 <ArrowRight className="w-5 h-5 ml-2 inline" />
               </a>
-              
             </div>
           </div>
         </div>
@@ -148,8 +147,6 @@ export default function FinanceAppHomePage() {
           </div>
         </div>
       </section>
-
-     
 
       {/* CTA Section */}
       <section className="py-20 bg-gradient-to-r from-blue-600 to-purple-600">
