@@ -13,11 +13,11 @@ import {
 } from "lucide-react";
 
 const Budgets = ({
-  transactions,
-  budgets,
+  transactions = [], // Add default empty array
+  budgets = {}, // Add default empty object
   setBudgets,
-  categories,
-  categoryColors,
+  categories = [], // Add default empty array
+  categoryColors = {}, // Add default empty object
 }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -35,14 +35,16 @@ const Budgets = ({
       }
 
       const data = await response.json();
-      setBudgets(data.budgets || {});
+      if (setBudgets) {
+        setBudgets(data.budgets || {});
+      }
     } catch (error) {
       console.error("Error fetching budgets:", error);
       setError("Failed to load budgets. Please try again.");
     } finally {
       setLoading(false);
     }
-  }, [setBudgets]); // Added setBudgets to dependency array
+  }, [setBudgets]);
 
   useEffect(() => {
     fetchBudgets();
@@ -75,6 +77,8 @@ const Budgets = ({
   };
 
   const handleBudgetChange = async (category, amount) => {
+    if (!setBudgets) return; // Guard against missing setBudgets
+
     const numericAmount = parseFloat(amount) || 1000;
 
     // Update local state immediately for responsive UI
@@ -97,6 +101,11 @@ const Budgets = ({
   };
 
   const getBudgetComparison = () => {
+    // Guard against undefined transactions
+    if (!transactions || !Array.isArray(transactions)) {
+      return [];
+    }
+
     const categoryExpenses = {};
 
     // Only count expense transactions for budget comparison
@@ -119,6 +128,11 @@ const Budgets = ({
   };
 
   const getCategoryData = () => {
+    // Guard against undefined transactions
+    if (!transactions || !Array.isArray(transactions)) {
+      return [];
+    }
+
     const categoryData = {};
 
     // Only count expense transactions for spending insights
