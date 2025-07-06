@@ -1,125 +1,121 @@
-import { NextResponse } from "next/server";
-import clientPromise from "@/lib/mongodb";
+import { MongoClient } from "mongodb";
 
-export async function GET(request) {
+const uri = process.env.MONGODB_URI;
+
+// Create a new client with proper options
+const client = new MongoClient(uri, {
+  maxPoolSize: 10,
+  serverSelectionTimeoutMS: 5000,
+  socketTimeoutMS: 45000,
+  // Remove any invalid options like buffermaxentries
+});
+
+export async function GET() {
   try {
-    // Validate environment variables
-    if (!process.env.MONGODB_URI) {
-      console.error("MONGODB_URI is not defined");
-      return NextResponse.json(
-        { error: "Database configuration error" },
-        { status: 500 }
-      );
-    }
-
-    const client = await clientPromise;
+    // Connect to MongoDB
+    await client.connect();
     const db = client.db("finance-app");
 
-    // Get current month's transactions
-    const currentMonth = new Date();
-    const startOfMonth = new Date(
-      currentMonth.getFullYear(),
-      currentMonth.getMonth(),
-      1
-    );
-    const endOfMonth = new Date(
-      currentMonth.getFullYear(),
-      currentMonth.getMonth() + 1,
-      0
-    );
+    // Get collections
+    const transactionsCollection = db.collection("transactions");
+    const budgetsCollection = db.collection("budgets");
 
-    // Use Promise.allSettled for better error handling
-    const [transactionsResult, budgetsResult] = await Promise.allSettled([
-      db
-        .collection("transactions")
-        .find({
-          date: {
-            $gte: startOfMonth,
-            $lte: endOfMonth,
-          },
-        })
-        .toArray(),
-      db.collection("budgets").find({}).toArray(),
-    ]);
+    // Fetch recent transactions
+    const recentTransactions = await transactionsCollection
+      .find({})
+      .sort({ date: -1 })
+      .limit(10)
+      .toArray();
 
-    if (transactionsResult.status === "rejected") {
-      console.error("Error fetching transactions:", transactionsResult.reason);
-      return NextResponse.json(
-        { error: "Failed to fetch transactions" },
-        { status: 500 }
-      );
-    }
-
-    if (budgetsResult.status === "rejected") {
-      console.error("Error fetching budgets:", budgetsResult.reason);
-      return NextResponse.json(
-        { error: "Failed to fetch budgets" },
-        { status: 500 }
-      );
-    }
-
-    const transactions = transactionsResult.value || [];
-    const budgets = budgetsResult.value || [];
+    // Fetch budgets
+    const budgets = await budgetsCollection.find({}).toArray();
 
     // Calculate spending by category
     const spendingByCategory = {};
-    transactions.forEach((transaction) => {
-      if (!transaction.category) {
-        console.warn("Transaction without category:", transaction);
-        return;
-      }
-      if (!spendingByCategory[transaction.category]) {
-        spendingByCategory[transaction.category] = 0;
-      }
-      spendingByCategory[transaction.category] += transaction.amount || 0;
-    });
+    const categoryTotals = {};
 
-    // Calculate total spending
-    const totalSpending = transactions.reduce(
-      (sum, transaction) => sum + (transaction.amount || 0),
-      0
-    );
+    for (const transaction of recentTransactions) {
+      const category = transaction.category || "Other";
+      spendingByCategory[category] =
+        (spendingByCategory[category] || 0) + transaction.amount;
+    }
 
-    // Calculate total budget
-    const totalBudget = budgets.reduce(
-      (sum, budget) => sum + (budget.amount || 0),
-      0
-    );
-
-    // Calculate budget vs spending
+    // Calculate budget comparison
     const budgetComparison = {};
-    budgets.forEach((budget) => {
-      if (!budget.category) {
-        console.warn("Budget without category:", budget);
-        return;
-      }
-      budgetComparison[budget.category] = {
-        budget: budget.amount || 0,
-        spent: spendingByCategory[budget.category] || 0,
-        remaining:
-          (budget.amount || 0) - (spendingByCategory[budget.category] || 0),
-        percentage: budget.amount
-          ? ((spendingByCategory[budget.category] || 0) / budget.amount) * 100
-          : 0,
-      };
-    });
+    let totalBudget = 0;
+    let totalSpending = 0;
 
-    return NextResponse.json({
-      summary: {
-        totalSpending,
-        totalBudget,
-        remainingBudget: totalBudget - totalSpending,
-        transactionCount: transactions.length,
-      },
+    for (const budget of budgets) {
+      const category = budget.category;
+      const budgetAmount = budget.amount;
+      const spent = spendingByCategory[category] || 0;
+
+      totalBudget += budgetAmount;
+      totalSpending += spent;
+
+      budgetComparison[category] = {
+        budget: budgetAmount,
+        spent: spent,
+        remaining: budgetAmount - spent,
+        percentage: (spent / budgetAmount) * 100,
+      };
+    }
+
+    // Calculate summary
+    const summary = {
+      totalSpending,
+      totalBudget,
+      remainingBudget: totalBudget - totalSpending,
+      monthlyIncome: 5000, // You might want to fetch this from another collection
+    };
+
+    const dashboardData = {
+      summary,
       spendingByCategory,
       budgetComparison,
-      recentTransactions: transactions.slice(0, 5),
-    });
+      recentTransactions,
+    };
+
+    return Response.json(dashboardData);
   } catch (error) {
-    console.error("Error fetching dashboard data:", error);
-    return NextResponse.json(
+    console.error("Dashboard API Error:", error);
+    return Response.json(
       { error: "Failed to fetch dashboard data" },
       { status: 500 }
     );
+  } finally {
+    // Close the connection
+    await client.close();
+  }
+}
+
+export async function POST(request) {
+  try {
+    const { budgets } = await request.json();
+
+    await client.connect();
+    const db = client.db("finance-app");
+    const budgetsCollection = db.collection("budgets");
+
+    // Update budgets
+    const bulkOps = Object.entries(budgets).map(([category, amount]) => ({
+      updateOne: {
+        filter: { category },
+        update: { $set: { category, amount } },
+        upsert: true,
+      },
+    }));
+
+    await budgetsCollection.bulkWrite(bulkOps);
+
+    return Response.json({ success: true });
+  } catch (error) {
+    console.error("Budget Update Error:", error);
+    return Response.json(
+      { error: "Failed to update budgets" },
+      { status: 500 }
+    );
+  } finally {
+    await client.close();
   }
 }
